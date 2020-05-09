@@ -2,7 +2,7 @@ const router = require("express").Router();
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { authenticateToken } = require("../utils/auth");
+const { authenticateToken } = require("../middleware/auth");
 
 // LOGIN
 router.route("/login").post(async (req, res) => {
@@ -21,15 +21,17 @@ router.route("/login").post(async (req, res) => {
       nickName: userWithSameEmail.nickName,
       email: userWithSameEmail.email,
     };
-    const accessToken = jwt.sign(dataToToken, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "3min",
-    });
 
-    const refreshToken = jwt.sign(
-      { ...userWithSameEmail },
-      process.env.ACCESS_TOKEN_SECRET
-    );
-    if (remember) await User.findOneAndUpdate({ email }, { refreshToken });
+    const refreshToken = jwt.sign(dataToToken, process.env.ACCESS_TOKEN_SECRET);
+
+    if (remember) {
+      await User.findOneAndUpdate({ email }, { refreshToken });
+      dataToToken.refreshToken = refreshToken;
+    } else await User.findOneAndUpdate({ email }, { refreshToken: null });
+
+    const accessToken = jwt.sign(dataToToken, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: "15s",
+    });
 
     return res.status(200).json({ accessToken });
   } catch (err) {
@@ -55,18 +57,69 @@ router.route("/signup").post(async (req, res) => {
     return res.status(201).json(addedUser);
   } catch (err) {
     console.error(err);
+    if (err.code === 11000) {
+      const keyPattern = Object.keys(err.keyPattern)[0];
+      return res
+        .status(400)
+        .json({ general: `Provided ${keyPattern} is taken` });
+    }
     return res.status(500).json(err);
   }
 });
 
 // LOGOUT
-router.route("/logout").post(authenticateToken, async (req, res) => {
-  const { email } = req.user;
+router.route("/logout").post(async (req, res) => {
+  const { email } = req.body.email;
   try {
     await User.findOneAndUpdate({ email }, { refreshToken: null });
     return res.status(200).json({ message: "Refresh token deleted" });
   } catch (err) {
-    console.log(error);
+    console.log(err);
+    return res.status(500).json(err);
+  }
+});
+
+// GET LOGGED USER DATA
+router.route("/").get(authenticateToken, async (req, res) => {
+  const { email } = req.user;
+  try {
+    const user = await User.findOne({ email });
+    return res.status(200).json(user);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// CREATE REFRESH TOKEN
+router.route("/token").post(async (req, res) => {
+  const decodedToken = req.body.decodedToken;
+  const email = decodedToken.email;
+  const refreshTokenLocalStorage = decodedToken.refreshToken;
+  try {
+    const userWithThatEmail = await User.findOne({ email });
+    if (refreshTokenLocalStorage === userWithThatEmail.refreshToken) {
+      // create new token
+      const newToken = jwt.sign(
+        {
+          fullName: decodedToken.fullName,
+          email: decodedToken.email,
+          nickName: decodedToken.nickName,
+          refreshToken: decodedToken.refreshToken,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: "15s",
+        }
+      );
+      return res.status(200).json({ newToken });
+    } else {
+      // LOGOUT
+      await User.findOneAndUpdate({ email }, { refreshToken: null });
+      return res.status(401).json({ error: "It is not your token,logout" });
+    }
+  } catch (err) {
+    console.error(err);
     return res.status(500).json(err);
   }
 });

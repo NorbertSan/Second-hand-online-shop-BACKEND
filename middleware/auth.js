@@ -28,7 +28,7 @@ exports.authenticateToken = async (req, res, next) => {
           dataToToken,
           process.env.ACCESS_TOKEN_SECRET,
           {
-            expiresIn: "15s",
+            expiresIn: "30min",
           }
         );
         req.headers["authorization"] = `Bearer ${accessToken}`;
