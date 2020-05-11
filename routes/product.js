@@ -3,19 +3,6 @@ const Product = require("../models/product.model");
 const multer = require("multer");
 const { authenticateToken } = require("../middleware/auth");
 
-router.route("/").get(async (req, res) => {
-  try {
-    const products = await Cloth.find()
-      .sort({ createdAt: "desc" })
-      .limit(10)
-      .sort({ dete: "desc" });
-    return res.status(200).json(products);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json(err);
-  }
-});
-
 // UPLOAD IMAGE
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -53,6 +40,32 @@ router.route("/add").post(authenticateToken, async (req, res) => {
     const newProduct = new Product(req.body);
     const addedProduct = await newProduct.save();
     return res.status(201).json(addedProduct);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// GET PRODUCTS
+router.route("/").post(async (req, res) => {
+  const page = parseInt(req.body.page);
+  const limit = parseInt(req.body.limit);
+  const findArs = {};
+  console.log(req.body);
+  Object.keys(req.body).map((category) => {
+    if (category !== "limit" && category !== "page" && category !== "") {
+      findArs[category] = req.body[category];
+    }
+  });
+  try {
+    const productsAmount = await Product.count(findArs);
+    const pages = Math.ceil(productsAmount / limit);
+    const products = await Product.find(findArs)
+      .populate("writer")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+    return res.status(200).json({ products, pages });
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);

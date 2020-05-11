@@ -11,7 +11,11 @@ const port = process.env.PORT || 5000;
 const config = require("./config/key");
 
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
 app.use(bodyParser.json());
 
 const uri = process.env.ATLAS_URI;
@@ -21,9 +25,9 @@ const connect = mongoose
   .catch((err) => console.log(err));
 
 // ROUTES
-app.use("/product", productsRouter);
-app.use("/user", usersRouter);
 
+app.use("/user", usersRouter);
+app.use("/product", productsRouter);
 app.use("/uploads", express.static("uploads"));
 
 // // Serve static assets if in production
