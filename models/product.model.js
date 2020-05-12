@@ -7,6 +7,7 @@ const productSchema = new Schema(
     size: String,
     price: Number,
     description: String,
+    condition: String,
     type: String,
     sold: {
       type: Boolean,

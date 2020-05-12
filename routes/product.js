@@ -71,4 +71,19 @@ router.route("/").post(async (req, res) => {
     return res.status(500).json(err);
   }
 });
+
+// GET SINGLE PRODUCT
+router.route("/:product_id").get(async (req, res) => {
+  const { product_id } = req.params;
+  try {
+    const product = await Product.findById(product_id).populate("writer");
+    // INCREASE VIEW
+    await Product.findByIdAndUpdate(product_id, { views: product.views + 1 });
+    return res.status(200).json(product);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;
