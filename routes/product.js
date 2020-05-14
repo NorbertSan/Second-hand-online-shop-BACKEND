@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Product = require("../models/product.model");
+const User = require("../models/user.model");
 const multer = require("multer");
 const { authenticateToken } = require("../middleware/auth");
 
@@ -36,9 +37,17 @@ router.route("/uploadImage").post(async (req, res) => {
 
 // ADD PRODUCT
 router.route("/add").post(authenticateToken, async (req, res) => {
+  const { email } = req.user;
   try {
     const newProduct = new Product(req.body);
     const addedProduct = await newProduct.save();
+    const user = await User.findOne({ email });
+    console.log(addedProduct);
+    await User.findOneAndUpdate(
+      { email },
+      { products: [...user.products, addedProduct._id] }
+    );
+
     return res.status(201).json(addedProduct);
   } catch (err) {
     console.error(err);
@@ -51,7 +60,6 @@ router.route("/").post(async (req, res) => {
   const page = parseInt(req.body.page);
   const limit = parseInt(req.body.limit);
   const findArs = {};
-  console.log(req.body);
   Object.keys(req.body).map((category) => {
     if (category !== "limit" && category !== "page" && category !== "") {
       findArs[category] = req.body[category];
@@ -80,6 +88,58 @@ router.route("/:product_id").get(async (req, res) => {
     // INCREASE VIEW
     await Product.findByIdAndUpdate(product_id, { views: product.views + 1 });
     return res.status(200).json(product);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// TOGGLE ADD TO FAV
+router.route("/:product_id/like").get(authenticateToken, async (req, res) => {
+  const { email } = req.user;
+  const { product_id } = req.params;
+  try {
+    const user = await User.findOne({ email });
+    const product = await Product.findById(product_id);
+    let like;
+    let newLikesCount = product.likes;
+    let newLikesProducts = [...user.likesProducts];
+    if (newLikesProducts.includes(product_id)) {
+      // REMOVE
+      newLikesCount--;
+      newLikesProducts = newLikesProducts.filter((item) => item !== product_id);
+      like = false;
+    } else {
+      // ADD
+      newLikesCount++;
+      newLikesProducts.push(product_id);
+      like = true;
+    }
+    await Product.findByIdAndUpdate(product_id, { likes: newLikesCount });
+    await User.findOneAndUpdate(
+      { email },
+      {
+        likesProducts: newLikesProducts,
+      }
+    );
+    return res.status(200).json({ productsIdsList: newLikesProducts, like });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// GET USER PRODUCTS
+router.route("/user").post(async (req, res) => {
+  const { productsIds, limit, page } = req.body;
+  try {
+    const products = await Product.find()
+      .where("_id")
+      .in(productsIds)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return res.status(200).json(products);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);

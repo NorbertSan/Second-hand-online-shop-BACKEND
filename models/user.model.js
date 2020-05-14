@@ -30,6 +30,14 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    likesProducts: {
+      type: Array,
+      default: [],
+    },
+    products: {
+      type: Array,
+      default: [],
+    },
   },
   {
     timestamps: true,

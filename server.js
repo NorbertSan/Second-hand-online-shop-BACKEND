@@ -17,10 +17,15 @@ app.use(
   })
 );
 app.use(bodyParser.json());
+app.use(express.json());
 
 const uri = process.env.ATLAS_URI;
 const connect = mongoose
-  .connect(config.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(config.mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
   .then(() => console.log("MongoDB Connected..."))
   .catch((err) => console.log(err));
 
