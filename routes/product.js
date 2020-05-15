@@ -81,7 +81,7 @@ router.route("/").post(async (req, res) => {
 });
 
 // GET SINGLE PRODUCT
-router.route("/:product_id").get(async (req, res) => {
+router.route("/singleProduct/:product_id").get(async (req, res) => {
   const { product_id } = req.params;
   try {
     const product = await Product.findById(product_id).populate("writer");
@@ -129,17 +129,33 @@ router.route("/:product_id/like").get(authenticateToken, async (req, res) => {
   }
 });
 
-// GET USER PRODUCTS
-router.route("/user").post(async (req, res) => {
+// GET PRODUCTS BASED ON ARRAY OF IDS
+router.route("/products/Ids").post(async (req, res) => {
   const { productsIds, limit, page } = req.body;
   try {
     const products = await Product.find()
       .where("_id")
       .in(productsIds)
+      .populate("writer")
+      .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
     return res.status(200).json(products);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// GET ALL UNIQUE BRANDS
+router.route("/brands").get(async (req, res) => {
+  try {
+    const brands = await Product.distinct("brand");
+    const uniqueBrands = brands.filter(
+      (brand, index, arr) => arr.indexOf(brand) === index
+    );
+    return res.status(200).json(uniqueBrands);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);

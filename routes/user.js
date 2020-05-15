@@ -30,7 +30,7 @@ router.route("/login").post(async (req, res) => {
     } else await User.findOneAndUpdate({ email }, { refreshToken: null });
 
     const accessToken = jwt.sign(dataToToken, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "15s",
+      expiresIn: "30min",
     });
 
     return res.status(200).json({ accessToken });
@@ -83,7 +83,7 @@ router.route("/logout").post(async (req, res) => {
 router.route("/").get(authenticateToken, async (req, res) => {
   const { email } = req.user;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate("products");
     return res.status(200).json(user);
   } catch (err) {
     console.error(err);
@@ -109,7 +109,7 @@ router.route("/token").post(async (req, res) => {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-          expiresIn: "15s",
+          expiresIn: "30min",
         }
       );
       return res.status(200).json({ newToken });
@@ -118,6 +118,18 @@ router.route("/token").post(async (req, res) => {
       await User.findOneAndUpdate({ email }, { refreshToken: null });
       return res.status(401).json({ error: "It is not your token,logout" });
     }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// GET USER DATA
+router.route("/:nickName").get(async (req, res) => {
+  const { nickName } = req.params;
+  try {
+    const userData = await User.findOne({ nickName });
+    return res.status(200).json(userData);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);

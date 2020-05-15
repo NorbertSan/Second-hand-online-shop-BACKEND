@@ -13,6 +13,11 @@ exports.authenticateToken = async (req, res, next) => {
       const user = await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
       if (user.exp * 1000 < Date.now())
         return res.status(403).json({ error: "Token expired" });
+
+      await User.findOneAndUpdate(
+        { email: user.email },
+        { lastLogin: Date.now() }
+      );
       req.user = user;
       next();
     } catch (err) {
@@ -33,6 +38,7 @@ exports.authenticateToken = async (req, res, next) => {
         );
         req.headers["authorization"] = `Bearer ${accessToken}`;
         req.user = user;
+        await User.findOneAndUpdate({ email }, { lastLogin: Date.now() });
         next();
       } else {
         console.error(err);

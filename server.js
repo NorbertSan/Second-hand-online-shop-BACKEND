@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const productsRouter = require("./routes/product");
 const usersRouter = require("./routes/user");
+const commentsRouter = require("./routes/comment");
 require("dotenv").config();
 
 const app = express();
@@ -11,13 +12,12 @@ const port = process.env.PORT || 5000;
 const config = require("./config/key");
 
 app.use(cors());
+app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
     extended: true,
   })
 );
-app.use(bodyParser.json());
-app.use(express.json());
 
 const uri = process.env.ATLAS_URI;
 const connect = mongoose
@@ -33,6 +33,7 @@ const connect = mongoose
 
 app.use("/user", usersRouter);
 app.use("/product", productsRouter);
+app.use("/comment", commentsRouter);
 app.use("/uploads", express.static("uploads"));
 
 // // Serve static assets if in production

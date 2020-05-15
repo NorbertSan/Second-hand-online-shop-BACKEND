@@ -38,6 +38,11 @@ const userSchema = new Schema(
       type: Array,
       default: [],
     },
+    comments: {
+      type: Array,
+      default: [],
+    },
+    lastLogin: { type: Number, default: new Date().getTime() },
   },
   {
     timestamps: true,
