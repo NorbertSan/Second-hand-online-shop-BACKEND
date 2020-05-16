@@ -136,4 +136,19 @@ router.route("/:nickName").get(async (req, res) => {
   }
 });
 
+// SEARCH USERS NICKNAME
+router.route("/search/:nickName").get(async (req, res) => {
+  const { nickName } = req.params;
+  try {
+    const nickNameList = await User.find(
+      { nickName: { $regex: ".*" + nickName + ".*" } },
+      { nickName: 1 }
+    ).limit(10);
+    return res.status(200).json(nickNameList);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;

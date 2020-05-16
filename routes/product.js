@@ -42,7 +42,6 @@ router.route("/add").post(authenticateToken, async (req, res) => {
     const newProduct = new Product(req.body);
     const addedProduct = await newProduct.save();
     const user = await User.findOne({ email });
-    console.log(addedProduct);
     await User.findOneAndUpdate(
       { email },
       { products: [...user.products, addedProduct._id] }
