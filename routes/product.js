@@ -1,39 +1,8 @@
 const router = require("express").Router();
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
-const multer = require("multer");
+
 const { authenticateToken } = require("../middleware/auth");
-
-// UPLOAD IMAGE
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}_${file.originalname}`);
-  },
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    if (ext !== ".jpg" || ext !== ".png") {
-      return cb(res.status(400).end("only jpg, png are allowed"), false);
-    }
-    cb(null, true);
-  },
-});
-const upload = multer({ storage }).single("file");
-
-router.route("/uploadImage").post(async (req, res) => {
-  upload(req, res, (err) => {
-    if (err) {
-      return res.json({ success: false, err });
-    }
-    return res.json({
-      success: true,
-      image: res.req.file.path,
-      fileName: res.req.file.filename,
-    });
-  });
-});
 
 // ADD PRODUCT
 router.route("/add").post(authenticateToken, async (req, res) => {

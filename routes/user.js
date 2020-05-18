@@ -74,7 +74,7 @@ router.route("/logout").post(async (req, res) => {
     await User.findOneAndUpdate({ email }, { refreshToken: null });
     return res.status(200).json({ message: "Refresh token deleted" });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res.status(500).json(err);
   }
 });
@@ -148,6 +148,39 @@ router.route("/search/:nickName").get(async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);
+  }
+});
+
+// UPDATE USER INFO
+router.route("/update_info").post(authenticateToken, async (req, res) => {
+  const data = req.body;
+  const { email } = req.user;
+  try {
+    const user = await User.findOneAndUpdate({ email }, data);
+    return res.status(200).json(user);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+// CHANGE PASSWORD
+router.route("/password").post(authenticateToken, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const { email } = req.user;
+  try {
+    const { password: presentPassword } = await User.findOne({ email });
+    const auth = await bcrypt.compare(oldPassword, presentPassword);
+    if (auth) {
+      const newHashedPassword = await bcrypt.hash(newPassword, 10);
+      await User.findOneAndUpdate({ email }, { password: newHashedPassword });
+      return res
+        .status(200)
+        .json({ password: "Password changed successfully" });
+    } else {
+      return res.status(403).json({ password: "Old password does not match" });
+    }
+  } catch (err) {
+    console.error(err);
   }
 });
 

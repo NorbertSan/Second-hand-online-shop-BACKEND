@@ -6,6 +6,7 @@ const productsRouter = require("./routes/product");
 const usersRouter = require("./routes/user");
 const commentsRouter = require("./routes/comment");
 require("dotenv").config();
+const multer = require("multer");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -30,11 +31,40 @@ const connect = mongoose
   .catch((err) => console.log(err));
 
 // ROUTES
-
 app.use("/user", usersRouter);
 app.use("/product", productsRouter);
 app.use("/comment", commentsRouter);
 app.use("/uploads", express.static("uploads"));
+// UPLOAD IMAGE
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}_${file.originalname}`);
+  },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    if (ext !== ".jpg" || ext !== ".png") {
+      return cb(res.status(400).end("only jpg, png are allowed"), false);
+    }
+    cb(null, true);
+  },
+});
+const upload = multer({ storage }).single("file");
+
+app.post("/uploadImage", async (req, res) => {
+  upload(req, res, (err) => {
+    if (err) {
+      return res.json({ success: false, err });
+    }
+    return res.json({
+      success: true,
+      image: res.req.file.path,
+      fileName: res.req.file.filename,
+    });
+  });
+});
 
 // // Serve static assets if in production
 // if (process.env.NODE_ENV === "production") {

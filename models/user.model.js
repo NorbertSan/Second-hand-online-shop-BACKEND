@@ -6,7 +6,6 @@ const userSchema = new Schema(
     fullName: {
       type: String,
       required: true,
-      trim: true,
     },
     nickName: {
       type: String,
@@ -26,6 +25,10 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    bio: {
+      type: String,
+      default: null,
+    },
     refreshToken: {
       type: String,
       default: null,
@@ -41,6 +44,10 @@ const userSchema = new Schema(
     comments: {
       type: Array,
       default: [],
+    },
+    avatar: {
+      type: String,
+      default: null,
     },
     lastLogin: { type: Number, default: new Date().getTime() },
   },
