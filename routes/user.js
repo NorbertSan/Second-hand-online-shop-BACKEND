@@ -123,6 +123,7 @@ router.route("/token").post(async (req, res) => {
           email: decodedToken.email,
           nickName: decodedToken.nickName,
           refreshToken: decodedToken.refreshToken,
+          _id: decodedToken._id,
         },
         process.env.ACCESS_TOKEN_SECRET,
         {

@@ -11,7 +11,7 @@ const conversationRoomSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    comments: {
+    messages: {
       type: Array,
       default: [],
     },
