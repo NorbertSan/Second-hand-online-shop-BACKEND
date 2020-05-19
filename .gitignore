@@ -2,3 +2,4 @@
 node_modules/
 dbschema.js
 config/
+uploads/

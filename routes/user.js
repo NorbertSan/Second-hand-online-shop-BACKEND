@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const User = require("../models/user.model");
+const Product = require("../models/product.model");
+const Comment = require("../models/comment.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("../middleware/auth");
@@ -83,7 +85,21 @@ router.route("/logout").post(async (req, res) => {
 router.route("/").get(authenticateToken, async (req, res) => {
   const { email } = req.user;
   try {
-    const user = await User.findOne({ email }).populate("products");
+    const user = await User.findOne(
+      { email },
+      {
+        fullName: 1,
+        nickName: 1,
+        email: 1,
+        location: 1,
+        bio: 1,
+        likesProducts: 1,
+        products: 1,
+        comments: 1,
+        avatar: 1,
+        lastLogin: 1,
+      }
+    ).populate("products");
     return res.status(200).json(user);
   } catch (err) {
     console.error(err);
@@ -128,7 +144,21 @@ router.route("/token").post(async (req, res) => {
 router.route("/:nickName").get(async (req, res) => {
   const { nickName } = req.params;
   try {
-    const userData = await User.findOne({ nickName });
+    const userData = await User.findOne(
+      { nickName },
+      {
+        fullName: 1,
+        nickName: 1,
+        email: 1,
+        location: 1,
+        bio: 1,
+        likesProducts: 1,
+        products: 1,
+        comments: 1,
+        avatar: 1,
+        lastLogin: 1,
+      }
+    );
     return res.status(200).json(userData);
   } catch (err) {
     console.error(err);
@@ -181,6 +211,39 @@ router.route("/password").post(authenticateToken, async (req, res) => {
     }
   } catch (err) {
     console.error(err);
+  }
+});
+// DELETE ACCOUNT
+router.route("/account").post(authenticateToken, async (req, res) => {
+  const { password } = req.body;
+  const { email } = req.user;
+  try {
+    const user = await User.findOne({ email });
+    const auth = await bcrypt.compare(password, user.password);
+    if (auth) {
+      // DELETE ALL RELATED COMMENTS && PRODUCTS
+      const productsIds = user.products;
+      const commentsIds = user.comments;
+
+      await Product.deleteMany({
+        _id: { $in: productsIds },
+      });
+      await Product.deleteMany({
+        writer: { $in: user._id },
+      });
+      await Comment.deleteMany({
+        _id: { $in: commentsIds },
+      });
+      await Comment.deleteMany({
+        writer: { $in: user._id },
+      });
+
+      await User.findOneAndDelete({ email });
+      return res.status(200).json({ general: "Account deleted" });
+    } else return res.status(403).json({ password: "Wrong password" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json(err);
   }
 });
 

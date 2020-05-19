@@ -19,7 +19,7 @@ router.route("/user/:nickName").get(async (req, res) => {
     const comments = await Comment.find()
       .where("_id")
       .in(commentsIds)
-      .populate("writer")
+      .populate("writer", { nickName: 1 })
       .sort({ createdAt: -1 });
     return res.status(200).json(comments);
   } catch (err) {
@@ -61,7 +61,7 @@ router.route("/").post(authenticateToken, async (req, res) => {
 
     const addedCommentWithUserPopulate = await Comment.findById(
       addedComment._id
-    ).populate("writer");
+    ).populate("writer", { nickName: 1 });
     return res.status(201).json({
       comment: addedCommentWithUserPopulate,
       commentIdToDelete: commonCommentId || null,
@@ -101,7 +101,9 @@ router.route("/:comment_id").put(authenticateToken, async (req, res) => {
     await Comment.findByIdAndUpdate(comment_id, {
       ...req.body,
     });
-    const editComment = await Comment.findById(comment_id).populate("writer");
+    const editComment = await Comment.findById(comment_id).populate("writer", {
+      nickName: 1,
+    });
     return res.status(200).json(editComment);
   } catch (err) {
     console.error(err);
