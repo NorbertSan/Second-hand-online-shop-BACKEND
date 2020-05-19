@@ -22,6 +22,7 @@ router.route("/login").post(async (req, res) => {
       fullName: userWithSameEmail.fullName,
       nickName: userWithSameEmail.nickName,
       email: userWithSameEmail.email,
+      _id: userWithSameEmail._id,
     };
 
     const refreshToken = jwt.sign(dataToToken, process.env.ACCESS_TOKEN_SECRET);

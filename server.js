@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const productsRouter = require("./routes/product");
 const usersRouter = require("./routes/user");
 const commentsRouter = require("./routes/comment");
+const messagesRouter = require("./routes/message");
 require("dotenv").config();
 const multer = require("multer");
 
@@ -34,6 +35,7 @@ const connect = mongoose
 app.use("/user", usersRouter);
 app.use("/product", productsRouter);
 app.use("/comment", commentsRouter);
+app.use("/message", messagesRouter);
 app.use("/uploads", express.static("uploads"));
 // UPLOAD IMAGE
 const storage = multer.diskStorage({

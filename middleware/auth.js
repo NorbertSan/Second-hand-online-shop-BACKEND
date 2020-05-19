@@ -28,6 +28,7 @@ exports.authenticateToken = async (req, res, next) => {
           fullName: user.fullName,
           nickName: user.nickName,
           email: user.email,
+          _id: user._id,
         };
         const accessToken = jwt.sign(
           dataToToken,
