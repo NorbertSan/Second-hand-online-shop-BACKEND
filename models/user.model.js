@@ -49,6 +49,10 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    unreadMessages: {
+      type: Array,
+      default: [],
+    },
     lastLogin: { type: Number, default: new Date().getTime() },
   },
   {

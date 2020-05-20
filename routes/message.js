@@ -9,8 +9,8 @@ router.route("/add").post(authenticateToken, async (req, res) => {
   const { recipient: recipientNickName, body } = req.body;
   const { _id } = req.user;
   try {
-    // find conversation room
     const recipient = await User.findOne({ nickName: recipientNickName });
+    // find conversation room
     let conversationRoom = await ConversationRoom.findOne({
       $or: [
         { user1: _id, user2: recipient._id },
@@ -36,7 +36,14 @@ router.route("/add").post(authenticateToken, async (req, res) => {
     const newMessagesIds = [addedMessage._id, ...conversationRoom.messages];
     await ConversationRoom.findByIdAndUpdate(conversationRoom._id, {
       messages: newMessagesIds,
+      read: false,
     });
+    // push message id to recipient unReadMessages array
+    const newUnreadMessages = [addedMessage._id, ...recipient.unreadMessages];
+    await User.findByIdAndUpdate(recipient._id, {
+      unreadMessages: newUnreadMessages,
+    });
+
     const addedMessageWithUserInfo = await Message.findById(addedMessage._id)
       .populate("writer", {
         nickName: 1,
@@ -52,7 +59,6 @@ router.route("/add").post(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
-
 // GET CONVERSATION ROOMS OVERVIEW WITH ONE LATEST MESSAGE
 router.route("/rooms").get(authenticateToken, async (req, res) => {
   const { _id } = req.user;
@@ -66,8 +72,8 @@ router.route("/rooms").get(authenticateToken, async (req, res) => {
     const messages = await Message.find()
       .where("_id")
       .in(messagesIds)
-      .populate("writer", { avatar: 1, nickName: 1 })
-      .populate("recipient", { avatar: 1, nickName: 1 })
+      .populate("writer", { avatar: 1, nickName: 1, lastLogin: 1 })
+      .populate("recipient", { avatar: 1, nickName: 1, lastLogin: 1 })
       .sort({ createdAt: -1 });
 
     return res.status(200).json(messages);
@@ -82,18 +88,47 @@ router.route("/room/:nickName").get(authenticateToken, async (req, res) => {
   const { _id } = req.user;
   try {
     const { _id: interlocutor_id } = await User.findOne({ nickName });
-    const { messages: messagesId } = await ConversationRoom.findOne({
+    const conversationRoom = await ConversationRoom.findOne({
       $or: [
         { user1: _id, user2: interlocutor_id },
         { user1: interlocutor_id, user2: _id },
       ],
     });
+    if (!conversationRoom) return res.status(200).json([]);
+    const { messages: messagesId } = conversationRoom;
     const messages = await Message.find()
       .where("_id")
       .in(messagesId)
-      .populate("writer", { avatar: 1, nickName: 1 })
+      .populate("writer", { avatar: 1, nickName: 1, lastLogin: 1 })
       .sort({ createdAt: 1 });
     return res.status(200).json(messages);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+// MARK MESSAGES READ
+router.route("/read").post(authenticateToken, async (req, res) => {
+  const { nickName } = req.body;
+  const { _id } = req.user;
+  try {
+    const { unreadMessages } = await User.findById(_id);
+    const relatedUnreadMessages = (
+      await Message.find()
+        .where("_id")
+        .in(unreadMessages)
+        .populate("writer", { nickName: 1 })
+    )
+      .filter((message) => message.writer.nickName === nickName)
+      .map((item) => item._id.toString());
+
+    const newUnreadMessages = unreadMessages.filter(
+      (unreadMessId) => !relatedUnreadMessages.includes(unreadMessId.toString())
+    );
+    await User.findByIdAndUpdate(_id, { unreadMessages: newUnreadMessages });
+
+    return res.status(200).json(newUnreadMessages);
+    return;
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);

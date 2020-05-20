@@ -2,6 +2,7 @@ const router = require("express").Router();
 const User = require("../models/user.model");
 const Product = require("../models/product.model");
 const Comment = require("../models/comment.model");
+const ConversationRoom = require("../models/conversationRoom.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("../middleware/auth");
@@ -99,6 +100,7 @@ router.route("/").get(authenticateToken, async (req, res) => {
         comments: 1,
         avatar: 1,
         lastLogin: 1,
+        unreadMessages: 1,
       }
     ).populate("products");
     return res.status(200).json(user);
@@ -159,6 +161,7 @@ router.route("/:nickName").get(async (req, res) => {
         comments: 1,
         avatar: 1,
         lastLogin: 1,
+        createdAt: 1,
       }
     );
     return res.status(200).json(userData);

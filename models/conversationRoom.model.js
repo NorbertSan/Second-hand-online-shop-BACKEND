@@ -15,6 +15,10 @@ const conversationRoomSchema = new Schema(
       type: Array,
       default: [],
     },
+    read: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
