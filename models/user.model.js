@@ -53,6 +53,14 @@ const userSchema = new Schema(
       type: Array,
       default: [],
     },
+    notifications: {
+      type: Array,
+      default: [],
+    },
+    unreadNotificationsNumber: {
+      type: Number,
+      default: 0,
+    },
     lastLogin: { type: Number, default: new Date().getTime() },
   },
   {

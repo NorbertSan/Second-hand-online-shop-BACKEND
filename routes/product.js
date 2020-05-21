@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Product = require("../models/product.model");
 const User = require("../models/user.model");
+const Notification = require("../models/notification.model");
 
 const { authenticateToken } = require("../middleware/auth");
 
@@ -76,32 +77,53 @@ router.route("/singleProduct/:product_id").get(async (req, res) => {
 
 // TOGGLE ADD TO FAV
 router.route("/:product_id/like").get(authenticateToken, async (req, res) => {
-  const { email } = req.user;
+  const { _id } = req.user;
   const { product_id } = req.params;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findById(_id);
     const product = await Product.findById(product_id);
+    const recipientUser = await User.findById(product.writer);
     let like;
     let newLikesCount = product.likes;
     let newLikesProducts = [...user.likesProducts];
+    let newUnreadNotificationsNumber = recipientUser.unreadNotificationsNumber;
+    let newNotificationsIds = [...recipientUser.notifications];
     if (newLikesProducts.includes(product_id)) {
       // REMOVE
       newLikesCount--;
+      if (newUnreadNotificationsNumber > 0) newUnreadNotificationsNumber--;
+      // FIND NOTIFICATION TO REMOVE
+      await Notification.findOneAndRemove({
+        product: product._id,
+        type: "like",
+        author: _id,
+        recipient: recipientUser._id,
+      });
       newLikesProducts = newLikesProducts.filter((item) => item !== product_id);
       like = false;
     } else {
       // ADD
+      const newNotification = new Notification({
+        type: "like",
+        product: product._id,
+        author: _id,
+        recipient: recipientUser._id,
+      });
+      const { _id: notification_id } = await newNotification.save();
+      newNotificationsIds.push(notification_id);
       newLikesCount++;
+      newUnreadNotificationsNumber++;
       newLikesProducts.push(product_id);
       like = true;
     }
     await Product.findByIdAndUpdate(product_id, { likes: newLikesCount });
-    await User.findOneAndUpdate(
-      { email },
-      {
-        likesProducts: newLikesProducts,
-      }
-    );
+    await User.findByIdAndUpdate(_id, {
+      likesProducts: newLikesProducts,
+    });
+    await User.findByIdAndUpdate(product.writer, {
+      unreadNotificationsNumber: newUnreadNotificationsNumber,
+      notifications: newNotificationsIds,
+    });
     return res.status(200).json({ productsIdsList: newLikesProducts, like });
   } catch (err) {
     console.error(err);

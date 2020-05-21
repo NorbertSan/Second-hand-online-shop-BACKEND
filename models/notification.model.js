@@ -12,6 +12,10 @@ const notificationSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    recipient: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,

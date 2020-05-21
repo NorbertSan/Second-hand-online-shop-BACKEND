@@ -101,6 +101,8 @@ router.route("/").get(authenticateToken, async (req, res) => {
         avatar: 1,
         lastLogin: 1,
         unreadMessages: 1,
+        notifications: 1,
+        unreadNotificationsNumber: 1,
       }
     ).populate("products");
     return res.status(200).json(user);
