@@ -16,6 +16,10 @@ const notificationSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    read: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

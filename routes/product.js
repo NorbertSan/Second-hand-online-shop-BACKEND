@@ -93,26 +93,33 @@ router.route("/:product_id/like").get(authenticateToken, async (req, res) => {
       newLikesCount--;
       if (newUnreadNotificationsNumber > 0) newUnreadNotificationsNumber--;
       // FIND NOTIFICATION TO REMOVE
-      await Notification.findOneAndRemove({
+      const removedNotification = await Notification.findOneAndRemove({
         product: product._id,
         type: "like",
         author: _id,
         recipient: recipientUser._id,
       });
+      if (removedNotification)
+        newNotificationsIds = newNotificationsIds.filter(
+          (notId) => notId.toString() != removedNotification._id.toString()
+        );
+
       newLikesProducts = newLikesProducts.filter((item) => item !== product_id);
       like = false;
     } else {
       // ADD
-      const newNotification = new Notification({
-        type: "like",
-        product: product._id,
-        author: _id,
-        recipient: recipientUser._id,
-      });
-      const { _id: notification_id } = await newNotification.save();
-      newNotificationsIds.push(notification_id);
+      if (user._id !== recipientUser._id) {
+        const newNotification = new Notification({
+          type: "like",
+          product: product._id,
+          author: _id,
+          recipient: recipientUser._id,
+        });
+        const addedNotification = await newNotification.save();
+        newNotificationsIds = [addedNotification._id, ...newNotificationsIds];
+        newUnreadNotificationsNumber++;
+      }
       newLikesCount++;
-      newUnreadNotificationsNumber++;
       newLikesProducts.push(product_id);
       like = true;
     }
@@ -120,10 +127,12 @@ router.route("/:product_id/like").get(authenticateToken, async (req, res) => {
     await User.findByIdAndUpdate(_id, {
       likesProducts: newLikesProducts,
     });
-    await User.findByIdAndUpdate(product.writer, {
-      unreadNotificationsNumber: newUnreadNotificationsNumber,
-      notifications: newNotificationsIds,
-    });
+    if (user._id.toString() !== recipientUser._id.toString()) {
+      await User.findByIdAndUpdate(product.writer, {
+        unreadNotificationsNumber: newUnreadNotificationsNumber,
+        notifications: newNotificationsIds,
+      });
+    }
     return res.status(200).json({ productsIdsList: newLikesProducts, like });
   } catch (err) {
     console.error(err);

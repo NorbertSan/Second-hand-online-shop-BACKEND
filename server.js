@@ -6,6 +6,7 @@ const productsRouter = require("./routes/product");
 const usersRouter = require("./routes/user");
 const commentsRouter = require("./routes/comment");
 const messagesRouter = require("./routes/message");
+const notificationsRouter = require("./routes/notification");
 require("dotenv").config();
 const multer = require("multer");
 
@@ -36,6 +37,7 @@ app.use("/user", usersRouter);
 app.use("/product", productsRouter);
 app.use("/comment", commentsRouter);
 app.use("/message", messagesRouter);
+app.use("/notification", notificationsRouter);
 app.use("/uploads", express.static("uploads"));
 // UPLOAD IMAGE
 const storage = multer.diskStorage({
