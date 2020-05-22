@@ -4,8 +4,9 @@ const User = require("../models/user.model");
 const { authenticateToken } = require("../middleware/auth");
 
 // GET NOTIFICATIONS
-router.route("/").get(authenticateToken, async (req, res) => {
+router.route("/").post(authenticateToken, async (req, res) => {
   const { _id } = req.user;
+  const { skip, limit } = req.body;
   try {
     const { notifications: notificationsIds } = await User.findById(_id);
     const notifications = await Notification.find()
@@ -13,8 +14,8 @@ router.route("/").get(authenticateToken, async (req, res) => {
       .in(notificationsIds)
       .populate("author", { avatar: 1, nickName: 1 })
       .sort({ createdAt: -1 })
-      .skip(0)
-      .limit(10);
+      .skip(skip * limit)
+      .limit(limit);
     return res.status(200).json(notifications);
   } catch (err) {
     console.error(err);
@@ -32,7 +33,7 @@ router.route("/clear_unread").put(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
-// MARK NOTIFICATION AS READ
+// MARK NOTIFICATION READ
 router.route("/read").put(authenticateToken, async (req, res) => {
   const { notification_id } = req.body;
   try {
