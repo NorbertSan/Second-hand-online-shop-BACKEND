@@ -173,4 +173,22 @@ router.route("/brands").get(async (req, res) => {
   }
 });
 
+// DELETE PRODUCT
+router.route("/:product_id").delete(authenticateToken, async (req, res) => {
+  const { product_id } = req.params;
+  const { _id } = req.user;
+  try {
+    const user = await User.findById(_id);
+    await Product.findByIdAndDelete(product_id);
+    const refreshProducts = [...user.products].filter(
+      (product) => product != product_id
+    );
+    await User.findByIdAndUpdate(_id, { products: refreshProducts });
+    return res.status(200).json({ general: "Product deleted" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;

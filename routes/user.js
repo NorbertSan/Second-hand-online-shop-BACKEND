@@ -103,7 +103,7 @@ router.route("/").get(authenticateToken, async (req, res) => {
         unreadMessages: 1,
         unreadNotificationsNumber: 1,
       }
-    ).populate("products");
+    );
     return res.status(200).json(user);
   } catch (err) {
     console.error(err);
