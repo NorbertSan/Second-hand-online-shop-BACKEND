@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Comment = require("../models/comment.model");
 const User = require("../models/user.model");
+const Notification = require("../models/notification.model");
 const { authenticateToken } = require("../middleware/auth");
 
 const findCommonItem = (arr1, arr2) => {
@@ -54,11 +55,17 @@ router.route("/").post(authenticateToken, async (req, res) => {
       );
       await Comment.findByIdAndDelete(commonCommentId);
     }
-    await User.findOneAndUpdate(
-      { nickName },
-      { comments: [...newCommentsIds, addedComment._id] }
-    );
-
+    const newNotification = new Notification({
+      type: "comment",
+      author: userWriter._id,
+      recipient: userRecipient._id,
+    });
+    const addedNotification = await newNotification.save();
+    await User.findByIdAndUpdate(userRecipient._id, {
+      comments: [...newCommentsIds, addedComment._id],
+      unreadNotificationsNumber: userRecipient.unreadNotificationsNumber + 1,
+      notifications: [addedNotification, ...userRecipient.notifications],
+    });
     const addedCommentWithUserPopulate = await Comment.findById(
       addedComment._id
     ).populate("writer", { nickName: 1 });

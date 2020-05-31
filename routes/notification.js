@@ -13,6 +13,7 @@ router.route("/").post(authenticateToken, async (req, res) => {
       .where("_id")
       .in(notificationsIds)
       .populate("author", { avatar: 1, nickName: 1 })
+      .populate("recipient", { avatar: 1, nickName: 1 })
       .sort({ createdAt: -1 })
       .skip(skip * limit)
       .limit(limit);
