@@ -61,6 +61,10 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
+    payments: {
+      type: Array,
+      default: [],
+    },
     lastLogin: { type: Number, default: new Date().getTime() },
   },
   {

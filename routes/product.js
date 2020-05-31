@@ -44,6 +44,8 @@ router.route("/").post(async (req, res) => {
         lastLogin: 1,
         avatar: 1,
       })
+      .where("sold")
+      .in(false)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -58,14 +60,17 @@ router.route("/").post(async (req, res) => {
 router.route("/singleProduct/:product_id").get(async (req, res) => {
   const { product_id } = req.params;
   try {
-    const product = await Product.findById(product_id).populate("writer", {
-      avatar: 1,
-      nickName: 1,
-      createdAt: 1,
-      lastLogin: 1,
-      location: 1,
-      products: 1,
-    });
+    const product = await Product.findById(product_id)
+      .where("sold")
+      .in(false)
+      .populate("writer", {
+        avatar: 1,
+        nickName: 1,
+        createdAt: 1,
+        lastLogin: 1,
+        location: 1,
+        products: 1,
+      });
     // INCREASE VIEW
     await Product.findByIdAndUpdate(product_id, { views: product.views + 1 });
     return res.status(200).json(product);
@@ -147,6 +152,8 @@ router.route("/products/Ids").post(async (req, res) => {
     const products = await Product.find()
       .where("_id")
       .in(productsIds)
+      .where("sold")
+      .in(false)
       .populate("writer", { avatar: 1, lastLogin: 1, nickName: 1 })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)

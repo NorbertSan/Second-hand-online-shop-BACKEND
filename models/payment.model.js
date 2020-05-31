@@ -15,6 +15,10 @@ const paymentSchema = new Schema(
       type: Object,
       default: {},
     },
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+    },
   },
   {
     timestamps: true,

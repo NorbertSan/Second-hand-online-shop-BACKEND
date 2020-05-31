@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const notificationSchema = new Schema(
   {
-    type: String, // 'like' || 'comment'
+    type: String, // 'like' || 'comment' || 'sell'
     product: {
       type: Schema.Types.ObjectId,
       ref: "Product",
