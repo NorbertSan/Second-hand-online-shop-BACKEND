@@ -5,6 +5,7 @@ const Product = require("../models/product.model");
 const Notification = require("../models/notification.model");
 const { authenticateToken } = require("../middleware/auth");
 
+// CREATE ORDER
 router.route("/").post(authenticateToken, async (req, res) => {
   const { _id } = req.user;
   const { addressData, paymentData, recipientData, product_id } = req.body;
@@ -49,4 +50,24 @@ router.route("/").post(authenticateToken, async (req, res) => {
   }
 });
 
+// GET ALL USER ORDERS
+router.route("/").get(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  try {
+    const { payments } = await User.findById(_id);
+    const purchases = await Payment.find()
+      .where("_id")
+      .in(payments)
+      .populate({
+        path: "product",
+        populate: {
+          path: "writer",
+        },
+      });
+    return res.status(200).json(purchases);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
 module.exports = router;

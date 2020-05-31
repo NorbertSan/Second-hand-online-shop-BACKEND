@@ -102,7 +102,6 @@ router.route("/").get(authenticateToken, async (req, res) => {
         lastLogin: 1,
         unreadMessages: 1,
         unreadNotificationsNumber: 1,
-        shoppingCard: 1,
       }
     );
     return res.status(200).json(user);
