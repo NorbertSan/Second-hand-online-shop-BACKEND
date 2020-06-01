@@ -70,4 +70,22 @@ router.route("/").get(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+
+// GET ALL USER SALES
+router.route("/sales").get(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  try {
+    const { products } = await User.findById(_id);
+    const payments = await Payment.find()
+      .where("product")
+      .in(products)
+      .sort({ createdAt: -1 })
+      .populate("product");
+    return res.status(200).json(payments);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;

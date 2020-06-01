@@ -20,7 +20,7 @@ router.route("/user/:nickName").get(async (req, res) => {
     const comments = await Comment.find()
       .where("_id")
       .in(commentsIds)
-      .populate("writer", { nickName: 1 })
+      .populate("writer", { nickName: 1, avatar: 1 })
       .sort({ createdAt: -1 });
     return res.status(200).json(comments);
   } catch (err) {
