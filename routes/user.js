@@ -278,7 +278,7 @@ router
       if (following.includes(userToFollowId)) {
         // UNFOLLOW
         if (refreshUnreadNotificationsNumber > 0)
-          newUnreadNotificationsNumber--;
+          refreshUnreadNotificationsNumber--;
         // FIND NOTIFICATION TO REMOVE
         const removedNotification = await Notification.findOneAndRemove({
           type: "follow",
@@ -334,9 +334,25 @@ router.route("/followers").post(authenticateToken, async (req, res) => {
     const { followers: followersIds } = await User.findById(_id);
     const followers = await User.find(
       { _id: followersIds },
-      { nickName: 1, avatar: 1 }
+      { nickName: 1, avatar: 1, fullName: 1 }
     );
     return res.status(200).json(followers);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
+// GET LOGGED USER FOLLOWING
+router.route("/following").post(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  try {
+    const { following: followingIds } = await User.findById(_id);
+    const following = await User.find(
+      { _id: followingIds },
+      { avatar: 1, nickName: 1, fullName: 1 }
+    );
+    return res.status(200).json(following);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);
