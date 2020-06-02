@@ -102,6 +102,8 @@ router.route("/").get(authenticateToken, async (req, res) => {
         lastLogin: 1,
         unreadMessages: 1,
         unreadNotificationsNumber: 1,
+        following: 1,
+        followers: 1,
       }
     );
     return res.status(200).json(user);
@@ -199,6 +201,7 @@ router.route("/update_info").post(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+
 // CHANGE PASSWORD
 router.route("/password").post(authenticateToken, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -219,6 +222,7 @@ router.route("/password").post(authenticateToken, async (req, res) => {
     console.error(err);
   }
 });
+
 // DELETE ACCOUNT
 router.route("/account").post(authenticateToken, async (req, res) => {
   const { password } = req.body;
@@ -252,5 +256,49 @@ router.route("/account").post(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+
+// TOGGLE FOLLOW USER
+router
+  .route("/:nickName/toggleFollow")
+  .post(authenticateToken, async (req, res) => {
+    const { email } = req.user;
+    const { nickName } = req.params;
+    try {
+      const { following, _id } = await User.findOne({ email });
+      const {
+        _id: userToFollowId,
+        followers: userToFollowFollowers,
+      } = await User.findOne({ nickName });
+      let refreshFollowing = [...following];
+      let refreshUserToFollowFollowers = [...userToFollowFollowers];
+
+      if (following.includes(userToFollowId)) {
+        // UNFOLLOW
+
+        refreshFollowing = refreshFollowing.filter(
+          (follower) => follower != userToFollowId.toString()
+        );
+
+        refreshUserToFollowFollowers = refreshUserToFollowFollowers.filter(
+          (follower) => follower != _id.toString()
+        );
+      } else {
+        // FOLLOW
+        refreshFollowing = [userToFollowId, ...refreshFollowing];
+        refreshUserToFollowFollowers = [_id, ...refreshUserToFollowFollowers];
+      }
+      await User.findByIdAndUpdate(_id, {
+        following: refreshFollowing,
+      });
+      await User.findByIdAndUpdate(userToFollowId, {
+        followers: refreshUserToFollowFollowers,
+      });
+
+      return res.status(200).json({ refreshFollowing });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json(err);
+    }
+  });
 
 module.exports = router;

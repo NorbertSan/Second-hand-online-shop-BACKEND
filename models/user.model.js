@@ -66,6 +66,14 @@ const userSchema = new Schema(
       default: [],
     },
     lastLogin: { type: Number, default: new Date().getTime() },
+    following: {
+      type: Array,
+      default: [],
+    },
+    followers: {
+      type: Array,
+      default: [],
+    },
   },
   {
     timestamps: true,
