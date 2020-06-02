@@ -327,4 +327,20 @@ router
     }
   });
 
+// GET LOGGED USER FOLLOWERS
+router.route("/followers").post(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  try {
+    const { followers: followersIds } = await User.findById(_id);
+    const followers = await User.find(
+      { _id: followersIds },
+      { nickName: 1, avatar: 1 }
+    );
+    return res.status(200).json(followers);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;
