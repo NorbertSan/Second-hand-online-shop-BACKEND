@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const User = require("../models/user.model");
 const Product = require("../models/product.model");
+const Notification = require("../models/notification.model");
 const Comment = require("../models/comment.model");
-const ConversationRoom = require("../models/conversationRoom.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("../middleware/auth");
@@ -268,12 +268,27 @@ router
       const {
         _id: userToFollowId,
         followers: userToFollowFollowers,
+        notifications,
+        unreadNotificationsNumber,
       } = await User.findOne({ nickName });
       let refreshFollowing = [...following];
       let refreshUserToFollowFollowers = [...userToFollowFollowers];
-
+      let refreshNotifications = [...notifications];
+      let refreshUnreadNotificationsNumber = unreadNotificationsNumber;
       if (following.includes(userToFollowId)) {
         // UNFOLLOW
+        if (refreshUnreadNotificationsNumber > 0)
+          newUnreadNotificationsNumber--;
+        // FIND NOTIFICATION TO REMOVE
+        const removedNotification = await Notification.findOneAndRemove({
+          type: "follow",
+          author: _id,
+          recipient: userToFollowId,
+        });
+        if (removedNotification)
+          refreshNotifications = refreshNotifications.filter(
+            (notId) => notId.toString() != removedNotification._id.toString()
+          );
 
         refreshFollowing = refreshFollowing.filter(
           (follower) => follower != userToFollowId.toString()
@@ -284,6 +299,15 @@ router
         );
       } else {
         // FOLLOW
+        const newNotification = new Notification({
+          type: "follow",
+          author: _id,
+          recipient: userToFollowId,
+        });
+        const addedNotification = await newNotification.save();
+        refreshNotifications = [addedNotification._id, ...refreshNotifications];
+        refreshUnreadNotificationsNumber++;
+
         refreshFollowing = [userToFollowId, ...refreshFollowing];
         refreshUserToFollowFollowers = [_id, ...refreshUserToFollowFollowers];
       }
@@ -292,6 +316,8 @@ router
       });
       await User.findByIdAndUpdate(userToFollowId, {
         followers: refreshUserToFollowFollowers,
+        notifications: refreshNotifications,
+        unreadNotificationsNumber: refreshUnreadNotificationsNumber,
       });
 
       return res.status(200).json({ refreshFollowing });
