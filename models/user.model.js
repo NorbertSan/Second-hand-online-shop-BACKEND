@@ -74,6 +74,14 @@ const userSchema = new Schema(
       type: Array,
       default: [],
     },
+    blockedUsers: {
+      type: Array,
+      default: [],
+    },
+    blockedBy: {
+      type: Array,
+      default: [],
+    },
   },
   {
     timestamps: true,

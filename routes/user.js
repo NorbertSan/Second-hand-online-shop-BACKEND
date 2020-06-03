@@ -359,4 +359,49 @@ router.route("/following").post(authenticateToken, async (req, res) => {
   }
 });
 
+// BLOCK USER
+router.route("/:user_id/block").put(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  const { user_id: userToBlock_id } = req.params;
+  // TODO, WHO BLOCK : 1) REMOVE FROM FOLLOWERS 2) ADD TO BLOCK LIST 3) REMOVE FROM FOLLOWING (IF FOLLOW)
+  // TODO, WHO IS BLOCKED : 1) REMOVE FROM FOLLOWINGS 2) ADD TO BLOCKED BY 3) REMOVE FROM FOLLOWERS (IF FOLLOW)
+  try {
+    const { followers, blockedUsers, following } = await User.findById(_id);
+    const refreshFollowers = followers.filter(
+      (follower) => follower != userToBlock_id.toString()
+    );
+    const refreshBlockedUsers = [userToBlock_id, ...blockedUsers];
+    const refreshFollowing = following.filter(
+      (follow) => follow != userToBlock_id.toString()
+    );
+    await User.findByIdAndUpdate(_id, {
+      followers: refreshFollowers,
+      blockedUsers: refreshBlockedUsers,
+      following: refreshFollowing,
+    });
+    //
+    const {
+      following: blockedFollowing,
+      blockedBy,
+      followers: blockedFollowers,
+    } = await User.findById(userToBlock_id);
+    const refreshBlockedFollowing = blockedFollowing.filter(
+      (following) => following != _id.toString()
+    );
+    const refreshBlockedBy = [_id, ...blockedBy];
+    const refreshBlockedFollowers = blockedFollowers.filter(
+      (follower) => follower != _id.toString()
+    );
+    await User.findByIdAndUpdate(userToBlock_id, {
+      following: refreshBlockedFollowing,
+      blockedBy: refreshBlockedBy,
+      followers: refreshBlockedFollowers,
+    });
+    return res.status(200).json({ refreshFollowers, refreshFollowing });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+
 module.exports = router;
