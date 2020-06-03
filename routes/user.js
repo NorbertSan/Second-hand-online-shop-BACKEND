@@ -403,5 +403,20 @@ router.route("/:user_id/block").put(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+// GET BLOCKED USER
+router.route("/blockedUsers").post(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  try {
+    const { blockedUsers: blockedUsersIds } = await User.findById(_id);
+    const blockedUsers = await User.find(
+      { _id: blockedUsersIds },
+      { nickName: 1, avatar: 1, fullName: 1 }
+    );
+    return res.status(200).json(blockedUsers);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
 
 module.exports = router;
