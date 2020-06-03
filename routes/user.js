@@ -418,5 +418,26 @@ router.route("/blockedUsers").post(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+// UNBLOCK USER
+router.route("/:user_id/unblock").put(authenticateToken, async (req, res) => {
+  const { _id } = req.user;
+  const { user_id: userToUnblock_id } = req.params;
+  try {
+    const { blockedUsers } = await User.findById(_id);
+    const refreshBlockedUsers = blockedUsers.filter(
+      (blockedUser) => blockedUser != userToUnblock_id.toString()
+    );
+    const { blockedBy } = await User.findById(userToUnblock_id);
+    const refreshBlockedBy = blockedBy.filter((user) => user != _id.toString());
+    await User.findByIdAndUpdate(_id, { blockedUsers: refreshBlockedUsers });
+    await User.findByIdAndUpdate(userToUnblock_id, {
+      blockedBy: refreshBlockedBy,
+    });
+    return res.status(200).json(userToUnblock_id);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
 
 module.exports = router;
