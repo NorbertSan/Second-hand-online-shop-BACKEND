@@ -170,7 +170,11 @@ router.route("/brands").get(async (req, res) => {
     const uniqueBrands = brands.filter(
       (brand, index, arr) => arr.indexOf(brand) === index
     );
-    return res.status(200).json(uniqueBrands);
+    const formatBrands = uniqueBrands.map((brand, index) => ({
+      key: index,
+      value: brand,
+    }));
+    return res.status(200).json(formatBrands);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);

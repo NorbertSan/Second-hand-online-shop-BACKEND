@@ -104,6 +104,8 @@ router.route("/").get(authenticateToken, async (req, res) => {
         unreadNotificationsNumber: 1,
         following: 1,
         followers: 1,
+        blockedUsers: 1,
+        blockedBy: 1,
       }
     );
     return res.status(200).json(user);

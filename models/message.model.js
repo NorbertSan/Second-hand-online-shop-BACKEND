@@ -12,6 +12,14 @@ const messageSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    images: {
+      type: Array,
+      default: [],
+    },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

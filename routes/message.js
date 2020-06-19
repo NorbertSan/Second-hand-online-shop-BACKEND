@@ -6,7 +6,7 @@ const { authenticateToken } = require("../middleware/auth");
 
 // ADD MESSAGE
 router.route("/add").post(authenticateToken, async (req, res) => {
-  const { recipient: recipientNickName, body } = req.body;
+  const { recipient: recipientNickName, body, images } = req.body;
   const { _id } = req.user;
   try {
     const recipient = await User.findOne({ nickName: recipientNickName });
@@ -30,6 +30,7 @@ router.route("/add").post(authenticateToken, async (req, res) => {
       body,
       writer: _id,
       recipient: recipient._id,
+      images,
     });
     const addedMessage = await newMessage.save();
     // push message id to room conversation
@@ -63,8 +64,11 @@ router.route("/add").post(authenticateToken, async (req, res) => {
 router.route("/rooms").get(authenticateToken, async (req, res) => {
   const { _id } = req.user;
   try {
+    const { blockedUsers } = await User.findById(_id);
     const conversationRoomsList = await ConversationRoom.find({
       $or: [{ user1: [_id] }, { user2: [_id] }],
+      user1: { $nin: blockedUsers },
+      user2: { $nin: blockedUsers },
     });
     // GET LATEST MESSAGE FROM EVERY ROOM
     let messagesIds = [];
@@ -87,7 +91,10 @@ router.route("/room/:nickName").get(authenticateToken, async (req, res) => {
   const { nickName } = req.params;
   const { _id } = req.user;
   try {
+    const { blockedUsers } = await User.findById(_id);
     const { _id: interlocutor_id } = await User.findOne({ nickName });
+    if (blockedUsers.includes(interlocutor_id))
+      return res.status(404).json({ error: "User is blocked" });
     const conversationRoom = await ConversationRoom.findOne({
       $or: [
         { user1: _id, user2: interlocutor_id },
@@ -129,6 +136,21 @@ router.route("/read").post(authenticateToken, async (req, res) => {
 
     return res.status(200).json(newUnreadMessages);
     return;
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
+// DELETE MESSAGE
+router.route("/:message_id").delete(authenticateToken, async (req, res) => {
+  const { message_id } = req.params;
+  const { _id } = req.user;
+  try {
+    const message = await Message.findOneAndUpdate(
+      { _id: message_id, writer: _id },
+      { deleted: true }
+    );
+    return res.status(200).json(message);
   } catch (err) {
     console.error(err);
     return res.status(500).json(err);
