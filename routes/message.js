@@ -156,5 +156,23 @@ router.route("/:message_id").delete(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+// REACT MESSAGE
+router.route("/:message_id/react").put(authenticateToken, async (req, res) => {
+  const { message_id } = req.params;
+  const { emojiIndex } = req.body;
+  const { _id } = req.user;
+  try {
+    const { reacts } = await Message.findById(message_id);
+    const refreshReacts = reacts.filter((reactObj) => reactObj.author !== _id);
+    refreshReacts.push({ author: _id, emojiIndex });
+    const message = await Message.findByIdAndUpdate(message_id, {
+      reacts: refreshReacts,
+    });
+    return res.status(200).json({ ...message, reacts: refreshReacts });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
 
 module.exports = router;

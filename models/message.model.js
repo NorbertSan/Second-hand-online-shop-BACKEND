@@ -20,6 +20,10 @@ const messageSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    reacts: {
+      type: Array,
+      default: [],
+    },
   },
   {
     timestamps: true,

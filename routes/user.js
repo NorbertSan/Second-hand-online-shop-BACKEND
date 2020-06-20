@@ -441,5 +441,23 @@ router.route("/:user_id/unblock").put(authenticateToken, async (req, res) => {
     return res.status(500).json(err);
   }
 });
+// GET USERS FROM IDS
+router.route("/users/ids").post(authenticateToken, async (req, res) => {
+  const { usersIds } = req.body;
+  try {
+    const users = await User.find(
+      {
+        _id: {
+          $in: usersIds,
+        },
+      },
+      { nickName: 1, avatar: 1 }
+    );
+    return res.status(200).json(users);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
 
 module.exports = router;
